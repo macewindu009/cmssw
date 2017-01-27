@@ -1,21 +1,21 @@
 import FWCore.ParameterSet.Config as cms
 from CondCore.CondDB.CondDB_cfi import *
+from CondCore.DBCommon.CondDBSetup_cfi import CondDBSetup
 
-def loadLocalSqlite(process, sqliteFilename, tag = 'JetCorrectorParametersCollection_Fall15_25nsV2_MC_AK4PFchs'):
-    process.load("CondCore.DBCommon.CondDBCommon_cfi")
+def loadLocalSqlite(process, sqliteFilename, tag = 'JetCorrectorParametersCollection_Summer16_23Sep2016V2_MC_AK4PFchs'):
+    process.load("CondCore.CondDB.CondDB_cfi")
     process.jec = cms.ESSource("PoolDBESSource",
-          DBParameters = cms.PSet(
-            messageLevel = cms.untracked.int32(0)
-            ),
+          CondDBSetup,
+          connect = cms.string(sqliteFilename),
           timetype = cms.string('runnumber'),
           toGet = cms.VPSet(
-          cms.PSet(
-                record = cms.string('JetCorrectionsRecord'),
-                tag    = cms.string(tag),
-                label  = cms.untracked.string('AK4PFchs')
-                ),
+	  cms.PSet(
+            	record = cms.string('JetCorrectionsRecord'),
+            	tag    = cms.string(tag),
+            	label  = cms.untracked.string('AK4PFchs')
+		)
           ), 
-          connect = cms.string('sqlite:' + sqliteFilename)
+          
     )
     ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
     process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
