@@ -2,11 +2,11 @@ import FWCore.ParameterSet.Config as cms
 from CondCore.CondDB.CondDB_cfi import *
 from CondCore.DBCommon.CondDBSetup_cfi import CondDBSetup
 
-def loadLocalSqlite(process, sqliteFilename, tag = 'JetCorrectorParametersCollection_Summer16_23Sep2016V2_MC_AK4PFchs'):
+def loadLocalSqlite(process, sqliteFilename, tag = 'JetCorrectorParametersCollection_Summer16_23Sep2016V4_MC_AK4PFchs'):
     process.load("CondCore.CondDB.CondDB_cfi")
     process.jec = cms.ESSource("PoolDBESSource",
           CondDBSetup,
-          connect = cms.string(sqliteFilename),
+          connect = cms.string('sqlite:' + sqliteFilename),
           timetype = cms.string('runnumber'),
           toGet = cms.VPSet(
 	  cms.PSet(
