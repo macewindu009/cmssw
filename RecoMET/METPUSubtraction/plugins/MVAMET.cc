@@ -500,7 +500,10 @@ void MVAMET::addToMap(const metPlus &recoil, const metPlus &referenceMET)
   var_[type +  "_Cov00" ] = recoil.getSignificanceMatrix()(0,0);
   var_[type +  "_Cov11" ] = recoil.getSignificanceMatrix()(1,1);
   var_[type + "_sumEtFraction" ] = recoil.sumEt()/referenceMET.sumEt();
-  var_[type + "_dPhi" ] = TVector2::Phi_mpi_pi(recoil.phi() - referenceMET.phi());
+  if (std::isnan(recoil.phi() - referenceMET.phi()))
+      var_[type + "_dPhi" ] = 0;
+  else
+      var_[type + "_dPhi" ] = TVector2::Phi_mpi_pi(recoil.phi() - referenceMET.phi());
 }
 
 void MVAMET::addToMap(const recoilingBoson &Z)
