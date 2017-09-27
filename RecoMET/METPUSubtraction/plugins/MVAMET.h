@@ -51,14 +51,17 @@ class recoilComponent {
   std::vector<reco::CandidatePtr> neutralTauJetCandidates;
   recoilComponent(edm::Ptr<reco::Candidate> srcLepton) : srcLepton_(srcLepton) {}
   edm::Ptr<reco::Candidate> getSrcLepton() const { return srcLepton_; }
-  reco::Candidate::LorentzVector p4() const { return this->p4_; }
-  void setP4(const reco::Candidate::LorentzVector & p4) { p4_ = p4; }
+  //reco::Candidate::LorentzVector p4() const { return this->p4_; }
+  reco::Candidate::LorentzVector p4() const { return chargedP4() + neutralP4(); }
+  // should not be used, components have to split in neutral and charged and store in TauJetCandidates
+  //void setP4(const reco::Candidate::LorentzVector & p4) { p4_ = p4; }
   reco::Candidate::LorentzVector chargedP4() const
   {
     reco::Candidate::LorentzVector p4;
     for(const auto & tauJet: chargedTauJetCandidates)
       p4 += tauJet->p4();
-    return p4+this->p4();
+    //return p4+this->p4();
+    return p4;
   }
 
   reco::Candidate::LorentzVector neutralP4() const
@@ -74,7 +77,7 @@ class recoilComponent {
     float sumEt = 0;
     for(const auto & tauJet: chargedTauJetCandidates)
       sumEt += tauJet->p4().pt();
-    return sumEt + this->p4().pt();
+    return sumEt;
   }
 
   float neutralSumEt() const

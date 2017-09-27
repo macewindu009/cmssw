@@ -89,7 +89,11 @@ metPlus MVAMET::calculateRecoil(metPlus* MET, const recoilingBoson &Z, edm::Even
     }
  
     if( MET->containsNeutral() )
-      Recoil.setSumEt(Recoil.sumEt());
+    {
+      Recoil.setP4(Recoil.p4() - Z.neutralP4());
+      Recoil.setSumEt(Recoil.sumEt()-Z.neutralSumEt());    
+    }
+      //Recoil.setSumEt(Recoil.sumEt());
 
     reco::METCovMatrix rotatedCovMatrix = rotateToZFrame * Recoil.getSignificanceMatrix();
     Recoil.setSignificanceMatrix( rotatedCovMatrix );
@@ -136,10 +140,12 @@ void MVAMET::handleTaus(edm::Ptr<reco::Candidate> lepton, recoilingBoson& Z, con
   {
     if(deltaR2 (*lepton, tau) > 1.e-6) // dR > 0.001
       continue;
+
     for(const auto & candidate : tau.signalCands())
     {
-      if(abs(candidate->pdgId()) > 11 and abs(candidate->pdgId()) < 16)
-        continue;
+	  //commented out as signalCandidates consist mostly of electrons, pions and photons
+      //if(abs(candidate->pdgId()) > 10 and abs(candidate->pdgId()) < 16)
+        //continue;
 
       if(candidate->charge() !=0)
         rComp.chargedTauJetCandidates.push_back(candidate);
@@ -154,23 +160,39 @@ void MVAMET::handleMuons(edm::Ptr<reco::Candidate> lepton, recoilingBoson& Z, co
 {
   math::PtEtaPhiELorentzVectorD p4Photon;      
   recoilComponent rComp(lepton); 
+  /*
   for (const auto & muon : muCollection)
   {
     if(deltaR2 (*lepton, muon) < 1.e-6) // dR < 0.001
     {
-      p4Photon.SetPt(muon.pfEcalEnergy()/TMath::CosH(muon.p4().eta()));
-      p4Photon.SetEta(muon.p4().eta());
-      p4Photon.SetPhi(muon.p4().phi());
-      p4Photon.SetE(muon.pfEcalEnergy());
+	  //obsolete, would have only stored the last photon anyways
+      //p4Photon.SetPt(muon.pfEcalEnergy()/TMath::CosH(muon.p4().eta()));
+      //p4Photon.SetEta(muon.p4().eta());
+      //p4Photon.SetPhi(muon.p4().phi());
+      //p4Photon.SetE(muon.pfEcalEnergy());
+
+	  if( muon.pfEcalEnergy() > 0 )
+		  if(muon.charge() !=0)
+			rComp.chargedTauJetCandidates.push_back(muon.pfCandidateRef(0));
+		  else
+	 		rComp.neutralTauJetCandidates.push_back(muon.pfCandidateRef(0));
+	  
     }
   }
+  */
+  if(lepton->charge() !=0)
+	rComp.chargedTauJetCandidates.push_back(lepton);
+  else
+	rComp.neutralTauJetCandidates.push_back(lepton);
 
+  /*
   if(p4Photon.E() > 0 )
   {
     rComp.setP4(lepton->p4() + p4Photon);
   }
   else
     rComp.setP4(lepton->p4());
+  */
 
   Z.addLepton(rComp);
 }
@@ -214,12 +236,18 @@ void MVAMET::calculateRecoilingObjects(edm::Event &evt, const pat::MuonCollectio
         handleTaus( lepton, Z, tauCollection);
       else if(abs(lepton->pdgId())==11)
         {
+		  
           recoilComponent rComp(lepton);
-          rComp.setP4(lepton->p4());
+		  if(lepton->charge() !=0)
+			rComp.chargedTauJetCandidates.push_back(lepton);
+		  else
+			rComp.neutralTauJetCandidates.push_back(lepton);
+          //rComp.setP4(lepton->p4());
           Z.addLepton(rComp);
-        }
-      else
-        std::cout << "Warning: unsupported recoiling object found" << std::endl;
+		  
+		}
+    else
+	    std::cout << "Warning: unsupported recoiling object found" << std::endl;
     }
     Bosons_.push_back(Z);
   } 
@@ -404,7 +432,7 @@ void MVAMET::produce(edm::Event& evt, const edm::EventSetup& es){
     // calculate new mvaMET
     pat::MET mvaMET(referenceRecoil);
     mvaMET.setP4(recoilP4);
-    mvaMET.setP4(mvaMET.p4() + Z.chargedP4());
+    mvaMET.setP4(mvaMET.p4() + Z.p4vec());
     mvaMET.setP4(- mvaMET.p4());
     // copy sumEt from input MET since there's no correction in MVA MET for that
     mvaMET.setSumEt((*referenceMETHandle_)[0].sumEt());
